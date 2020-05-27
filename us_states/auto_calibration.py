@@ -2,6 +2,7 @@ import numpy as np
 import sciris as sc
 import covasim as cv
 import parestlib as pst
+import hyperopt as hy
 import load_data as ld
 
 # Control verbosity
@@ -120,10 +121,17 @@ def get_bounds():
 def calibrate(state):
     ''' Perform the calibration '''
 
+
     pars, pkeys = get_bounds() # Get parameter guesses
-    shest = pst.ShellStep(objective, pars.best, pars.lb, pars.ub, optimum='min', maxiters=10, mp={'N':8}) # Create object
-    output = shest.optimize() # Perform optimization
-    output.pdict = sc.objdict({k:v for k,v in zip(pkeys, output.x)}) # Convert to a dict
+
+    # shest = pst.ShellStep(objective, pars.best, pars.lb, pars.ub, optimum='min', maxiters=10, mp={'N':8}) # Create object
+    # output = shest.optimize() # Perform optimization
+    # output.pdict = sc.objdict({k:v for k,v in zip(pkeys, output.x)}) # Convert to a dict
+
+    space = []
+    for i,k in enumerate(pkeys):
+        space += [hy.hp.uniform(k, pars.lb[i], pars.ub[i])]
+    output = hy.fmin(objective, space, algo=hy.tpe.suggest, max_evals=100)
 
     return output
 
