@@ -79,17 +79,11 @@ def objective(x, vb=vb):
     mismatch2 = 0 # Custom mismatch
     for key,wt in weights.items():
         if wt:
-            print('ok')
             actual    = sim.data[key].values
             predicted = sim.results[key].values[sim.day(sim.data.date[0]):]
             inds1 = sc.findinds(~np.isnan(actual))
             inds2 = sc.findinds(~np.isnan(predicted))
             inds = np.intersect1d(inds1, inds2)
-            import pylab as pl
-            pl.figure()
-            pl.plot(actual[inds])
-            pl.plot(predicted[inds])
-            pl.title(key)
             mismatch2 += wt*pst.gof(actual[inds], predicted[inds], estimator='median fractional')
     mismatch = [mismatch1, mismatch2][1] # Choose which mismatch to use
 
@@ -136,19 +130,22 @@ def calibrate(state):
 
 if __name__ == '__main__':
 
-    pars, pkeys = get_bounds() # Get parameter guesses
-    sim = create_sim(pars.best)
-    sim.run()
-    sim.plot(to_plot='overview')
-    objective(pars.best)
-
-    # T = sc.tic()
-    # output = calibrate('NY')
-    # sc.toc(T)
-
-    # sim = create_sim(output.pdict.values())
+    # # Plot initial
+    # pars, pkeys = get_bounds() # Get parameter guesses
+    # sim = create_sim(pars.best)
     # sim.run()
     # sim.plot(to_plot='overview')
+    # objective(pars.best)
+
+    # Calibrate
+    T = sc.tic()
+    output = calibrate('NY')
+    sc.toc(T)
+
+    # Plot result
+    sim = create_sim(output.pdict.values())
+    sim.run()
+    sim.plot(to_plot='overview')
 
 
 print('Done.')
