@@ -64,8 +64,8 @@ def objective(x, vb=vb):
     weights = dict(
         cum_deaths=10,
         cum_diagnoses=5,
-        new_deaths=2,
-        new_diagnoses=1,
+        new_deaths=0,
+        new_diagnoses=0,
         cum_severe=0,
         new_severe=0,
     )
@@ -75,33 +75,36 @@ def objective(x, vb=vb):
     sim.run()
 
     # Two methods for calculating mismtach
-    mismatch1 = -sim.compute_likelihood(weights=weights)
-    mismatch2 = 0
+    mismatch1 = -sim.compute_likelihood(weights=weights) # Built in mismatch
+    mismatch2 = 0 # Custom mismatch
     for key,wt in weights.items():
         actual    = sim.data[key].values
         predicted = sim.results[key].values
-        minlen = min(len(actual), len(predicted))
-        mismatch2 += pst.gof(actual[:minlen], predicted[:minlen])
+        inds1 = sc.findinds(~np.isnan(actual))
+        inds2 = sc.findinds(~np.isnan(predicted))
+        inds = np.intersect1d(inds1, inds2)
+        mismatch2 += pst.gof(actual[inds], predicted[inds], estimator='mean absolute')
+    mismatch = [mismatch1, mismatch2][1] # Choose which mismatch to use
 
     # Optionally show detail
     if vb.base:
-        print(f'Parameters: {x}, mismatches {mismatch1}, {mismatch2}')
+        print(f'Mismatch {mismatch}, pars: {x}')
     if vb.extra:
         print('Summary:')
         print(sim.summary)
     if vb.plot:
         sim.plot(to_plot='overview', scatter_args=dict(alpha=0.1), fig_args=dict(figsize=(30,20)))
 
-    return [mismatch1, mismatch2][0]
+    return mismatch
 
 
 def get_bounds():
     ''' Set parameter starting points and bounds '''
     pdict = sc.objdict(
         pop_infected = dict(best=1000,  lb=10,    ub=10000),
-        beta         = dict(best=0.015, lb=0.008, ub=0.025),
-        beta_day     = dict(best=30,    lb=15,    ub=60),
-        beta_change  = dict(best=0.5,   lb=0.1,   ub=0.9),
+        beta         = dict(best=0.020, lb=0.008, ub=0.025),
+        beta_day     = dict(best=45,    lb=15,    ub=60),
+        beta_change  = dict(best=0.33,  lb=0.1,   ub=0.9),
         symp_test    = dict(best=100,   lb=10,    ub=1000),
     )
 
@@ -117,7 +120,7 @@ def calibrate(state):
     ''' Perform the calibration '''
 
     pars, pkeys = get_bounds() # Get parameter guesses
-    shest = pst.ShellStep(objective, pars.best, pars.lb, pars.ub, optimum='min', maxiters=10, mp={'N':10}) # Create object
+    shest = pst.ShellStep(objective, pars.best, pars.lb, pars.ub, optimum='min', maxiters=10, mp={'N':8}) # Create object
     output = shest.optimize() # Perform optimization
     output.pdict = sc.objdict({k:v for k,v in zip(pkeys, output.x)}) # Convert to a dict
 
