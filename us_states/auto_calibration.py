@@ -101,11 +101,11 @@ def objective(x, vb=vb):
 def get_bounds():
     ''' Set parameter starting points and bounds '''
     pdict = sc.objdict(
-        pop_infected = dict(best=1000,  lb=10,    ub=10000),
-        beta         = dict(best=0.020, lb=0.008, ub=0.025),
-        beta_day     = dict(best=45,    lb=15,    ub=60),
-        beta_change  = dict(best=0.33,  lb=0.1,   ub=0.9),
-        symp_test    = dict(best=100,   lb=10,    ub=1000),
+        pop_infected = dict(best=1000,  lb=500,    ub=2000),
+        beta         = dict(best=0.020, lb=0.012, ub=0.025),
+        beta_day     = dict(best=45,    lb=30,    ub=60),
+        beta_change  = dict(best=0.33,  lb=0.2,   ub=0.5),
+        symp_test    = dict(best=100,   lb=50,    ub=200),
     )
 
     # Convert from dicts to arrays
