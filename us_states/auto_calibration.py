@@ -13,7 +13,7 @@ vb.plot    = 0
 vb.verbose = 0
 
 # Define and load the data
-state = 'NY'
+state = 'NJ'
 all_data = ld.load_data()
 data = all_data[state]
 
@@ -103,11 +103,11 @@ def objective(x, vb=vb):
 def get_bounds():
     ''' Set parameter starting points and bounds '''
     pdict = sc.objdict(
-        pop_infected = dict(best=1000,  lb=500,    ub=2000),
-        beta         = dict(best=0.020, lb=0.012, ub=0.025),
+        pop_infected = dict(best=100,   lb=10,    ub=5000),
+        beta         = dict(best=0.015, lb=0.008, ub=0.025),
         beta_day     = dict(best=45,    lb=30,    ub=60),
-        beta_change  = dict(best=0.33,  lb=0.2,   ub=0.5),
-        symp_test    = dict(best=100,   lb=50,    ub=200),
+        beta_change  = dict(best=0.5,   lb=0.2,   ub=0.8),
+        symp_test    = dict(best=100,   lb=20,    ub=500),
     )
 
     # Convert from dicts to arrays
