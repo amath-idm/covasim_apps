@@ -139,7 +139,7 @@ def calibrate(state):
 if __name__ == '__main__':
 
     # # Plot initial
-    # pars, pkeys = get_bounds() # Get parameter guesses
+    pars, pkeys = get_bounds() # Get parameter guesses
     # sim = create_sim(pars.best)
     # sim.run()
     # sim.plot(to_plot='overview')
@@ -151,9 +151,11 @@ if __name__ == '__main__':
     sc.toc(T)
 
     # Plot result
-    sim = create_sim(output.pdict.values())
+    x = [output[k] for k in pkeys]
+    sim = create_sim(x)
     sim.run()
-    sim.plot(to_plot='overview')
+    sim.plot(to_plot=['cum_infections', 'new_infections', 'cum_diagnoses', 'new_diagnoses', 'cum_deaths', 'new_deaths'], n_cols=2)
+    # sim.plot(to_plot='overview')
 
 
 print('Done.')
