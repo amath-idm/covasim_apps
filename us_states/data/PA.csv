@@ -1,4 +1,4 @@
-,date,key,cum_severe,cum_critical,cum_on_ventilator,dataQualityGrade,lastUpdateEt,death,new_death,new_severe,new_negatives,new_diagnoses,new_tests,day,new_critical,num_on_ventilator
+,date,key,cum_severe,cum_critical,cum_on_ventilator,dataQualityGrade,lastUpdateEt,death,new_deaths,new_severe,new_negatives,new_diagnoses,new_tests,day,new_critical,num_on_ventilator
 4512,2020-03-06,PA,,,,,,,,,,,,0,,
 4473,2020-03-07,PA,,,,,,,0.0,0.0,0.0,2.0,2.0,1,,
 4423,2020-03-08,PA,,,,,,,0.0,0.0,0.0,2.0,2.0,2,,

@@ -20,18 +20,27 @@ folder = 'data'
 states = list(mapping.keys())
 
 
-#%% Get the raw data
-data = sc.objdict()
-for state in states:
-    filename = f'{folder}/{state}.csv'
-    data[state] = pd.read_csv(filename)
+def load_data():
+
+    #%% Get the raw data
+    data = sc.objdict()
+    for state in states:
+        data[state]  = sc.objdict()
+
+    for state in states:
+        filename = f'{folder}/{state}.csv'
+        data[state].epi = pd.read_csv(filename)
 
 
-# From https://github.com/covid-modeling/covasim-connector/blob/master/runsim.py
-raw_pop_sizes = pd.read_csv("http://www2.census.gov/programs-surveys/popest/datasets/2010-2019/national/totals/nst-est2019-alldata.csv")
+    # From https://github.com/covid-modeling/covasim-connector/blob/master/runsim.py
+    raw_pop_sizes = pd.read_csv("http://www2.census.gov/programs-surveys/popest/datasets/2010-2019/national/totals/nst-est2019-alldata.csv")
+    for state in states:
+        data[state].popsize = int(raw_pop_sizes[raw_pop_sizes.NAME == mapping[state]].POPESTIMATE2019)
 
-popsizes = sc.objdict()
-for state in states:
-    popsizes[state] = int(raw_pop_sizes[raw_pop_sizes.NAME == mapping[state]].POPESTIMATE2019)
+    print('Done.')
 
-print('Done.')
+    return data
+
+
+if __name__ == '__main__':
+    data = load_data()

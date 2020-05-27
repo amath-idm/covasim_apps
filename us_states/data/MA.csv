@@ -1,4 +1,4 @@
-,date,key,cum_severe,cum_critical,cum_on_ventilator,dataQualityGrade,lastUpdateEt,death,new_death,new_severe,new_negatives,new_diagnoses,new_tests,day,new_critical,num_on_ventilator
+,date,key,cum_severe,cum_critical,cum_on_ventilator,dataQualityGrade,lastUpdateEt,death,new_deaths,new_severe,new_negatives,new_diagnoses,new_tests,day,new_critical,num_on_ventilator
 4204,2020-03-12,MA,,,,,3/11/2020 00:00,,,,,,,0,,
 4153,2020-03-13,MA,,,,,3/13/2020 16:00,,0.0,0.0,0.0,15.0,15.0,1,,
 4102,2020-03-14,MA,,,,,3/14/2020 16:00,,0.0,0.0,0.0,15.0,15.0,2,,

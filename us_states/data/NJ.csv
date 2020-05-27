@@ -1,4 +1,4 @@
-,date,key,cum_severe,cum_critical,cum_on_ventilator,dataQualityGrade,lastUpdateEt,death,new_death,new_severe,new_negatives,new_diagnoses,new_tests,day,new_critical,num_on_ventilator
+,date,key,cum_severe,cum_critical,cum_on_ventilator,dataQualityGrade,lastUpdateEt,death,new_deaths,new_severe,new_negatives,new_diagnoses,new_tests,day,new_critical,num_on_ventilator
 4534,2020-03-05,NJ,,,,,,,,,,,,0,,
 4506,2020-03-06,NJ,,,,,,,0.0,0.0,0.0,0.0,0.0,1,,
 4466,2020-03-07,NJ,,,,,,,0.0,0.0,0.0,3.0,3.0,2,,
