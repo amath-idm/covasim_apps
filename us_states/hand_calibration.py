@@ -27,6 +27,7 @@ interventions = [
 
 sim.update_pars(interventions=interventions)
 sim.run()
-sim.plot(to_plot='overview', scatter_args=dict(alpha=0.1), fig_args=dict(figsize=(30,20)))
+sim.plot(to_plot=['cum_infections', 'new_infections', 'cum_diagnoses', 'new_diagnoses', 'cum_deaths', 'new_deaths'], n_cols=2)
+# sim.plot(to_plot='overview', scatter_args=dict(alpha=0.1), fig_args=dict(figsize=(30,20)))
 
 print('Done.')
