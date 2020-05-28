@@ -106,8 +106,8 @@ def get_bounds():
     pdict = sc.objdict(
         pop_infected = dict(best=100,   lb=10,    ub=5000),
         beta         = dict(best=0.015, lb=0.008, ub=0.025),
-        beta_day     = dict(best=45,    lb=30,    ub=60),
-        beta_change  = dict(best=0.5,   lb=0.2,   ub=0.8),
+        beta_day     = dict(best=60,    lb=30,    ub=90),
+        beta_change  = dict(best=0.7,   lb=0.2,   ub=0.9),
         symp_test    = dict(best=100,   lb=20,    ub=500),
     )
 
