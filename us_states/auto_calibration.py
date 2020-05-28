@@ -2,12 +2,12 @@ import numpy as np
 import sciris as sc
 import covasim as cv
 import parestlib as pst
-import hyperopt as hy
+import optuna as op
 import load_data as ld
 
 # Control verbosity
 vb = sc.objdict()
-vb.base    = 1
+vb.base    = 0
 vb.extra   = 0
 vb.plot    = 0
 vb.verbose = 0
@@ -17,7 +17,7 @@ state = 'NJ'
 all_data = ld.load_data()
 data = all_data[state]
 
-cv.check_version('1.3.4', die=True)
+cv.check_version('1.4.0', die=True)
 
 
 def create_sim(x, vb=vb):
@@ -118,21 +118,46 @@ def get_bounds():
     return pars, pdict.keys()
 
 
-def calibrate(state):
-    ''' Perform the calibration '''
+#%% Calibration
 
+name      = 'optuna'
+storage   = f'sqlite:///{name}.db'
+n_trials  = 20
+n_workers = 8
+
+pars, pkeys = get_bounds() # Get parameter guesses
+
+
+def op_objective(trial):
 
     pars, pkeys = get_bounds() # Get parameter guesses
+    x = np.zeros(len(pkeys))
+    for k,key in enumerate(pkeys):
+        x[k] = trial.suggest_uniform(key, pars.lb[k], pars.ub[k])
 
-    # shest = pst.ShellStep(objective, pars.best, pars.lb, pars.ub, optimum='min', maxiters=10, mp={'N':8}) # Create object
-    # output = shest.optimize() # Perform optimization
-    # output.pdict = sc.objdict({k:v for k,v in zip(pkeys, output.x)}) # Convert to a dict
+    return objective(x)
 
-    space = []
-    for i,k in enumerate(pkeys):
-        space += [hy.hp.uniform(k, pars.lb[i], pars.ub[i])]
-    output = hy.fmin(objective, space, algo=hy.tpe.suggest, max_evals=100)
+def worker():
+    study = op.load_study(storage=storage, study_name=name)
+    return study.optimize(op_objective, n_trials=n_trials)
 
+
+def run_workers():
+    return sc.parallelize(worker, n_workers)
+
+
+def make_study():
+    try: op.delete_study(storage=storage, study_name=name)
+    except: pass
+    return op.create_study(storage=storage, study_name=name)
+
+
+def calibrate():
+    ''' Perform the calibration '''
+    make_study()
+    run_workers()
+    study = op.load_study(storage=storage, study_name=name)
+    output = study.best_params
     return output
 
 
@@ -147,7 +172,7 @@ if __name__ == '__main__':
 
     # Calibrate
     T = sc.tic()
-    output = calibrate('NY')
+    output = calibrate()
     sc.toc(T)
 
     # Plot result
