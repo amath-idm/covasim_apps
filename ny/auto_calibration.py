@@ -2,113 +2,71 @@ import numpy as np
 import pylab as pl
 import sciris as sc
 import covasim as cv
-import parestlib as pst
 import optuna as op
-import load_data as ld
-
-# Control verbosity
-vb = sc.objdict()
-vb.base    = 0
-vb.extra   = 0
-vb.plot    = 0
-vb.verbose = 0
-
-# Define and load the data
-state    = 'MI'  # Choose the state here!
-all_data = ld.load_data()
-data     = all_data[state]
-
-cv.check_version('1.4.0', die=True)
 
 
-def create_sim(x, vb=vb):
+cv.check_version('1.4.7')
+
+
+def create_sim(x):
     ''' Create the simulation from the parameters '''
 
     # Convert parameters
     pop_infected = x[0]
     beta         = x[1]
-    beta_day     = x[2]
-    beta_change  = x[3]
-    symp_test    = x[4]
+    symp_test    = x[2]
+    beta_change1 = x[3]
+    beta_change2 = x[4]
+    beta_days    = ['2020-03-15', '2020-04-01'] # Days social distancing changed
 
-    # Create parameters
+    # Define the inputs
+    datafile = 'NY.csv'
     pop_size = 100e3
     pars = dict(
-        pop_size     = pop_size,
-        pop_scale    = data.popsize/pop_size,
+        pop_size = pop_size,
+        pop_scale = 19.45e6/pop_size,
         pop_infected = pop_infected,
-        beta         = beta,
-        start_day    = '2020-02-01',
-        end_day      = '2020-06-01',
-        rescale      = True,
-        verbose      = vb.verbose,
-    )
+        pop_type = 'hybrid',
+        beta = beta,
+        start_day = '2020-02-01',
+        end_day   = '2020-06-14',
+        rescale = True,
+        )
 
-    #Create the sim
-    sim = cv.Sim(pars, datafile=data.epi)
+    # Create the simulation
+    sim = cv.Sim(pars, datafile=datafile)
 
-    # Add interventions
+    # Create the interventions
     interventions = [
-        cv.change_beta(days=beta_day, changes=beta_change),
+        cv.change_beta(days=beta_days, changes=[beta_change1, beta_change2]),
         cv.test_num(daily_tests=sim.data['new_tests'].dropna(), symp_test=symp_test),
         ]
 
-    # Update
-    sim.update_pars(interventions=interventions)
+    # Run the simulation
+    sim['interventions'] = interventions
 
     return sim
 
 
-def objective(x, vb=vb):
+def objective(x):
     ''' Define the objective function we are trying to minimize '''
 
-    # Set the weights for the data
-    weights = dict(
-        cum_deaths=10,
-        cum_diagnoses=5,
-        new_deaths=0,
-        new_diagnoses=0,
-        cum_severe=0,
-        new_severe=0,
-    )
-
     # Create and run the sim
-    sim = create_sim(x=x, vb=vb)
+    sim = create_sim(x=x)
     sim.run()
+    fit = sim.compute_fit()
 
-    # Two methods for calculating mismtach
-    mismatch1 = -sim.compute_likelihood(weights=weights) # Built in mismatch
-    mismatch2 = 0 # Custom mismatch
-    for key,wt in weights.items():
-        if wt:
-            actual    = sim.data[key].values
-            predicted = sim.results[key].values[sim.day(sim.data.date[0]):]
-            inds1 = sc.findinds(~np.isnan(actual))
-            inds2 = sc.findinds(~np.isnan(predicted))
-            inds = np.intersect1d(inds1, inds2)
-            mismatch2 += wt*pst.gof(actual[inds], predicted[inds], estimator='median fractional')
-    mismatch = [mismatch1, mismatch2][1] # Choose which mismatch to use
-
-    # Optionally show detail
-    if vb.base:
-        print(f'Mismatch {mismatch}, pars: {x}')
-    if vb.extra:
-        print('Summary:')
-        print(sim.summary)
-    if vb.plot:
-        sim.plot(to_plot='overview', scatter_args=dict(alpha=0.1), fig_args=dict(figsize=(30,20)))
-
-    return mismatch
+    return fit.mismatch
 
 
 def get_bounds():
     ''' Set parameter starting points and bounds '''
     pdict = sc.objdict(
-        pop_infected = dict(best=100,   lb=10,    ub=5000),
-        beta         = dict(best=0.015, lb=0.008, ub=0.025),
-        beta_day     = dict(best=60,    lb=30,    ub=90),
-        beta_change  = dict(best=0.7,   lb=0.2,   ub=0.9),
-        symp_test    = dict(best=100,   lb=20,    ub=500),
+        pop_infected = dict(best=1000,  lb=500,   ub=2000),
+        beta         = dict(best=0.016, lb=0.012, ub=0.018),
+        symp_test    = dict(best=30,    lb=20,    ub=40),
+        beta_change1 = dict(best=0.7,   lb=0.5,   ub=0.9),
+        beta_change2 = dict(best=0.3,   lb=0.2,   ub=0.5),
     )
 
     # Convert from dicts to arrays
@@ -121,10 +79,10 @@ def get_bounds():
 
 #%% Calibration
 
-name      = 'optuna'
+name      = 'optuna_ny'
 storage   = f'sqlite:///{name}.db'
-n_trials  = 20
-n_workers = 8
+n_trials  = 5
+n_workers = 4
 
 pars, pkeys = get_bounds() # Get parameter guesses
 
@@ -173,8 +131,8 @@ if __name__ == '__main__':
     pars, pkeys = get_bounds() # Get parameter guesses
     sim = create_sim(pars.best)
     sim.run()
-    sim.plot(to_plot=to_plot)
-    pl.gcf().axes[0].set_title('Initial parameter values')
+    fig = sim.plot(to_plot=to_plot)
+    fig.axes[0].set_title('Initial parameter values')
     objective(pars.best)
     pl.pause(1.0) # Ensure it has time to render
 
@@ -189,11 +147,11 @@ if __name__ == '__main__':
     x = [pars_calib[k] for k in pkeys]
     sim = create_sim(x)
     sim.run()
-    sim.plot(to_plot=to_plot)
-    pl.gcf().axes[0].set_title('Calibrated parameter values')
+    fig = sim.plot(to_plot=to_plot)
+    fig.axes[0].set_title('Calibrated parameter values')
 
     if do_save:
-        sc.savejson(f'calibrated_parameters_{state}.json', pars_calib)
+        sc.savejson(f'calibrated_parameters_ny.json', pars_calib)
 
 
 print('Done.')
