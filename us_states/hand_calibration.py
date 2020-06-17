@@ -10,9 +10,9 @@ pop_size = 200e3
 pars = dict(
     pop_size = pop_size,
     pop_scale = data.popsize/pop_size,
-    pop_infected = 100,
+    pop_infected = 5000,
     beta = 0.015,
-    start_day = '2020-02-01',
+    start_day = '2020-03-01',
     end_day   = '2020-06-17',
     rescale = True,
     )
@@ -21,7 +21,7 @@ pars = dict(
 sim = cv.Sim(pars, datafile=data.epi)
 
 interventions = [
-    cv.change_beta(days=20+30, changes=0.70),
+    cv.change_beta(days=20, changes=0.50),
     cv.test_num(daily_tests=sim.data['new_tests'].dropna(), symp_test=15),
     ]
 
