@@ -8,6 +8,7 @@ import covasim as cv; cv
 #%% Initialize
 
 mapping = {
+    'CA':'California',
     'IL':'Illinois',
     'MA':'Massachusetts',
     'MI':'Michigan',
