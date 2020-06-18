@@ -49,6 +49,8 @@ scatter_args = dict(alpha=0.3, marker='o')
 dateformat = '%d %b'
 
 fig = msim.plot(to_plot=to_plot, n_cols=1, fig_args=fig_args, scatter_args=scatter_args, dateformat=dateformat)
+fit = msim.base_sim.compute_fit(weights={'cum_diagnoses':1, 'cum_deaths':1})
+print('Average daily mismatch: ', fit.mismatch/msim.base_sim['n_days']/2*100)
 
 for ax in fig.axes:
     ax.legend(['Model', '80% modeled interval', 'Data'], loc='upper left')
