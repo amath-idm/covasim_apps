@@ -123,12 +123,13 @@ def make_study():
     return op.create_study(storage=storage, study_name=name)
 
 
-def load_study():
+def load_study(state='CA'):
+    storage   = f'sqlite:///opt_{state}.db'
     return op.load_study(storage=storage, study_name=name)
 
 
-def get_best_pars():
-    study = load_study()
+def get_best_pars(state='CA'):
+    study = load_study(state=state)
     output = study.best_params
     return output
 
