@@ -14,7 +14,6 @@ mapping = {
     'MI':'Michigan',
     'NJ':'New Jersey',
     'NY':'New York',
-    'PA':'Pennsylvania',
 }
 states = list(mapping.keys())
 folder = 'data'

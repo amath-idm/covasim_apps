@@ -5,12 +5,21 @@ import covasim as cv
 import optuna as op
 import load_data as ld
 
+# Saving and running
+do_save   = 1
+name      = 'covasim'
+storage   = f'sqlite:///opt_ca.db'
+n_trials  = 50
+n_workers = 36
+
+
 # Control verbosity
 vb = sc.objdict()
 vb.base    = 0
 vb.extra   = 0
 vb.plot    = 0
 vb.verbose = 0
+to_plot = ['cum_infections', 'new_infections', 'cum_tests', 'new_tests', 'cum_diagnoses', 'new_diagnoses', 'cum_deaths', 'new_deaths']
 
 # Define and load the data
 state    = 'CA'  # Choose the state here!
@@ -38,7 +47,7 @@ def create_sim(x, vb=vb):
         pop_infected = pop_infected,
         beta         = beta,
         start_day    = '2020-03-01',
-        end_day      = '2020-06-17',
+        end_day      = '2020-05-30',
         rescale      = True,
         verbose      = vb.verbose,
     )
@@ -89,14 +98,6 @@ def get_bounds():
 
 #%% Calibration
 
-name      = 'optuna'
-storage   = f'sqlite:///{name}.db'
-n_trials  = 100
-n_workers = 8
-
-pars, pkeys = get_bounds() # Get parameter guesses
-
-
 def op_objective(trial):
 
     pars, pkeys = get_bounds() # Get parameter guesses
@@ -121,47 +122,56 @@ def make_study():
     return op.create_study(storage=storage, study_name=name)
 
 
+def load_study():
+    return op.load_study(storage=storage, study_name=name)
+
+
+def get_best_pars():
+    study = load_study()
+    output = study.best_params
+    return output
+
+
 def calibrate():
     ''' Perform the calibration '''
     make_study()
     run_workers()
-    study = op.load_study(storage=storage, study_name=name)
-    output = study.best_params
+    output = get_best_pars()
     return output
 
 
 if __name__ == '__main__':
 
-    do_save = True
-
-    to_plot = ['cum_infections', 'new_infections', 'cum_tests', 'new_tests', 'cum_diagnoses', 'new_diagnoses', 'cum_deaths', 'new_deaths']
-
     # # Plot initial
-    print('Running initial...')
-    pars, pkeys = get_bounds() # Get parameter guesses
-    sim = create_sim(pars.best)
-    sim.run()
-    sim.plot(to_plot=to_plot)
-    pl.gcf().axes[0].set_title('Initial parameter values')
-    objective(pars.best)
-    pl.pause(1.0) # Ensure it has time to render
+    if vb.plot:
+        print('Running initial...')
+        pars, pkeys = get_bounds() # Get parameter guesses
+        sim = create_sim(pars.best)
+        sim.run()
+        sim.plot(to_plot=to_plot)
+        pl.gcf().axes[0].set_title('Initial parameter values')
+        objective(pars.best)
+        pl.pause(1.0) # Ensure it has time to render
 
     # Calibrate
-    print('Starting calibration for {state}...')
+    print(f'Starting calibration for {state}...')
     T = sc.tic()
     pars_calib = calibrate()
     sc.toc(T)
 
-    # Plot result
-    print('Plotting result...')
-    x = [pars_calib[k] for k in pkeys]
-    sim = create_sim(x)
-    sim.run()
-    sim.plot(to_plot=to_plot)
-    pl.gcf().axes[0].set_title('Calibrated parameter values')
-
     if do_save:
         sc.savejson(f'calibrated_parameters_{state}.json', pars_calib)
+
+    # Plot result
+    if vb.plot:
+        print('Plotting result...')
+        x = [pars_calib[k] for k in pkeys]
+        sim = create_sim(x)
+        sim.run()
+        sim.plot(to_plot=to_plot)
+        pl.gcf().axes[0].set_title('Calibrated parameter values')
+
+
 
 
 print('Done.')
