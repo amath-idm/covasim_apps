@@ -6,9 +6,10 @@ import optuna as op
 import load_data as ld
 
 # Saving and running
+state = 'NJ'
 do_save   = 1
 name      = 'covasim'
-storage   = f'sqlite:///opt_IL.db'
+storage   = f'sqlite:///opt_{state}.db'
 n_trials  = 50
 n_workers = 36
 
@@ -22,7 +23,7 @@ vb.verbose = 0
 to_plot = ['cum_infections', 'new_infections', 'cum_tests', 'new_tests', 'cum_diagnoses', 'new_diagnoses', 'cum_deaths', 'new_deaths']
 
 # Define and load the data
-state    = 'IL'  # Choose the state here!
+#state    = 'IL'  # Choose the state here!
 all_data = ld.load_data()
 data     = all_data[state]
 
