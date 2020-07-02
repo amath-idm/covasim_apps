@@ -6,12 +6,13 @@ import optuna as op
 import load_data as ld
 
 # Saving and running
-state = 'CA'
+state = 'IL'
 do_save   = 1
 name      = 'covasim'
 storage   = f'sqlite:///opt_{state}.db'
 n_trials  = 50
 n_workers = 36
+cv.check_version('1.5.0', die=True) # Ensure Covasim version is correct
 
 
 # Control verbosity
@@ -23,11 +24,8 @@ vb.verbose = 0
 to_plot = ['cum_infections', 'new_infections', 'cum_tests', 'new_tests', 'cum_diagnoses', 'new_diagnoses', 'cum_deaths', 'new_deaths']
 
 # Define and load the data
-#state    = 'IL'  # Choose the state here!
 all_data = ld.load_data()
 data     = all_data[state]
-
-cv.check_version('1.4.8', die=False)
 
 
 def create_sim(x, vb=vb):
@@ -48,7 +46,7 @@ def create_sim(x, vb=vb):
         pop_infected = pop_infected,
         beta         = beta,
         start_day    = '2020-03-01',
-        end_day      = '2020-05-30',
+        end_day      = '2020-05-30', # Change final day here
         rescale      = True,
         verbose      = vb.verbose,
     )
@@ -82,7 +80,7 @@ def objective(x, vb=vb):
 def get_bounds():
     ''' Set parameter starting points and bounds '''
     pdict = sc.objdict(
-        pop_infected = dict(best=1000,  lb=100,   ub=10000),
+        pop_infected = dict(best=10000,  lb=1000,   ub=50000),
         beta         = dict(best=0.015, lb=0.008, ub=0.020),
         beta_day     = dict(best=20,    lb=5,     ub=60),
         beta_change  = dict(best=0.5,   lb=0.2,   ub=0.9),
@@ -123,12 +121,12 @@ def make_study():
     return op.create_study(storage=storage, study_name=name)
 
 
-def load_study(state='CA'):
+def load_study(state=state):
     storage   = f'sqlite:///opt_{state}.db'
     return op.load_study(storage=storage, study_name=name)
 
 
-def get_best_pars(state='CA'):
+def get_best_pars(state=state):
     study = load_study(state=state)
     output = study.best_params
     return output
