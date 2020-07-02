@@ -1,7 +1,7 @@
 import pylab as pl
 import auto_calibration as ac
 
-do_plot = 0
+do_plot = 1
 run_init = 0
 state = 'CA'
 
