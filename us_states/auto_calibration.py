@@ -6,7 +6,7 @@ import optuna as op
 import load_data as ld
 
 # Saving and running
-state = 'CA'
+state = 'IL'
 do_save   = 1
 name      = 'covasim'
 storage   = f'sqlite:///opt_apr30_{state}.db'
