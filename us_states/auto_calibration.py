@@ -7,7 +7,7 @@ import load_data as ld
 
 # Saving and running
 state = 'NY'
-until = 'apr30'
+until = '05-30'
 do_save   = 1
 name      = 'covasim'
 storage   = f'sqlite:///opt_{until}_{state}.db'
@@ -47,7 +47,7 @@ def create_sim(x, vb=vb):
         pop_infected = pop_infected,
         beta         = beta,
         start_day    = '2020-03-01',
-        end_day      = '2020-04-30', # Change final day here
+        end_day      = f'2020-{until}', # Change final day here
         rescale      = True,
         verbose      = vb.verbose,
     )
