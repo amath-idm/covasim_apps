@@ -9,7 +9,7 @@ import load_data as ld
 state = 'IL'
 do_save   = 1
 name      = 'covasim'
-storage   = f'sqlite:///opt_{state}.db'
+storage   = f'sqlite:///opt_apr30_{state}.db'
 n_trials  = 50
 n_workers = 36
 cv.check_version('1.5.0', die=True) # Ensure Covasim version is correct
@@ -46,7 +46,7 @@ def create_sim(x, vb=vb):
         pop_infected = pop_infected,
         beta         = beta,
         start_day    = '2020-03-01',
-        end_day      = '2020-05-30', # Change final day here
+        end_day      = '2020-04-30', # Change final day here
         rescale      = True,
         verbose      = vb.verbose,
     )
