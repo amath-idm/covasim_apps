@@ -6,10 +6,11 @@ import optuna as op
 import load_data as ld
 
 # Saving and running
-state = 'CA'
+state = 'NY'
+until = 'apr30'
 do_save   = 1
 name      = 'covasim'
-storage   = f'sqlite:///opt_apr30_{state}.db'
+storage   = f'sqlite:///opt_{until}_{state}.db'
 n_trials  = 50
 n_workers = 36
 cv.check_version('1.5.0', die=True) # Ensure Covasim version is correct
@@ -122,7 +123,7 @@ def make_study():
 
 
 def load_study(state=state):
-    storage   = f'sqlite:///opt_{state}.db'
+    storage   = f'sqlite:///opt_{until}_{state}.db'
     return op.load_study(storage=storage, study_name=name)
 
 
