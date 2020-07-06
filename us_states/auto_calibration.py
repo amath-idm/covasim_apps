@@ -6,7 +6,7 @@ import optuna as op
 import load_data as ld
 
 # Saving and running
-state = 'CA'
+state = 'NY'
 until = '05-30'
 do_save   = 1
 name      = 'covasim'
@@ -30,7 +30,9 @@ data     = all_data[state]
 
 
 def create_sim(x, vb=vb):
-    ''' Create the simulation from the parameters '''
+    ''' Create the simulation from the
+
+    parameters '''
 
     # Convert parameters
     pop_infected = x[0]
