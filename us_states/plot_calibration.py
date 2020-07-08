@@ -21,7 +21,7 @@ pars_calib = ac.get_best_pars()
 x = [pars_calib[k] for k in pkeys]
 print(x)
 sim = ac.create_sim(x)
-sim.run()
+sim = ac.run_msim(sim, n_runs=3, n_cpus=3)
 fit = sim.compute_fit()
 
 if do_plot:

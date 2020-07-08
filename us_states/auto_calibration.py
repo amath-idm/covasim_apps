@@ -6,14 +6,14 @@ import optuna as op
 import load_data as ld
 
 # Saving and running
-state = 'NY'
-until = '05-30'
+state = 'CA'
+until = '05-30' # Note, update end day manually
 do_save   = 1
 name      = 'covasim'
-storage   = f'sqlite:///opt_{until}_{state}.db'
-n_trials  = 50
+storage   = f'sqlite:///opt_v2_{until}_{state}.db'
+n_trials  = 30
 n_workers = 36
-cv.check_version('1.5.0', die=True) # Ensure Covasim version is correct
+cv.check_version('1.5.1', die=True) # Ensure Covasim version is correct
 
 
 # Control verbosity
@@ -49,7 +49,7 @@ def create_sim(x, vb=vb):
         pop_infected = pop_infected,
         beta         = beta,
         start_day    = '2020-03-01',
-        end_day      = f'2020-{until}', # Change final day here
+        end_day      = f'2020-05-30', # Change final day here
         rescale      = True,
         verbose      = vb.verbose,
     )
@@ -69,12 +69,19 @@ def create_sim(x, vb=vb):
     return sim
 
 
+def run_msim(sim, n_runs=3, n_cpus=1):
+    msim = cv.MultiSim(base_sim=sim)
+    msim.run(n_runs=n_runs, n_cpus=n_cpus)
+    sim = msim.reduce(use_mean=True, output=True)
+    return sim
+
+
 def objective(x, vb=vb):
     ''' Define the objective function we are trying to minimize '''
 
     # Create and run the sim
     sim = create_sim(x=x, vb=vb)
-    sim.run()
+    sim = run_msim(sim)
     fit = sim.compute_fit()
 
     return fit.mismatch
@@ -84,7 +91,7 @@ def get_bounds():
     ''' Set parameter starting points and bounds '''
     pdict = sc.objdict(
         pop_infected = dict(best=10000,  lb=1000,   ub=50000),
-        beta         = dict(best=0.015, lb=0.008, ub=0.020),
+        beta         = dict(best=0.015, lb=0.007, ub=0.020),
         beta_day     = dict(best=20,    lb=5,     ub=60),
         beta_change  = dict(best=0.5,   lb=0.2,   ub=0.9),
         symp_test    = dict(best=30,   lb=5,    ub=200),

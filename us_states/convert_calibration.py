@@ -3,7 +3,7 @@ import pandas as pd
 import sciris as sc
 import auto_calibration as ac
 
-state = 'CA'
+state = 'NY'
 
 #%% Load and analyze the data
 sc.heading('Loading data...')
