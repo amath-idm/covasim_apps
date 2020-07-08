@@ -7,11 +7,10 @@ import optuna as op
 import load_data as ld
 
 # Saving and running
-until = '05-30' # Note, update end day manually
 do_save   = 1
 name      = 'covasim'
-n_trials  = 100
-n_workers = 36
+n_trials  = 2
+n_workers = 2
 cv.check_version('1.5.1', die=True) # Ensure Covasim version is correct
 
 # Control verbosity
@@ -23,18 +22,15 @@ vb.verbose = 0
 to_plot = ['cum_infections', 'new_infections', 'cum_tests', 'new_tests', 'cum_diagnoses', 'new_diagnoses', 'cum_deaths', 'new_deaths']
 
 
-def storage_path(st=None):
-    if st: state = st
-    return f'sqlite:///opt_v2_{until}_{state}.db'
+def storage_path(st):
+    return f'sqlite:///opt_v2_{until}_{st}.db'
 
-def create_sim(x, vb=vb, st=None):
+def create_sim(x, vb=vb, st=None, until=None):
     ''' Create the simulation from the parameters '''
-
-    if st: state = st
 
     # Define and load the data
     all_data = ld.load_data()
-    data     = all_data[state]
+    data     = all_data[st]
 
     # Convert parameters
     pop_infected = x[0]
@@ -42,6 +38,11 @@ def create_sim(x, vb=vb, st=None):
     beta_day     = x[2]
     beta_change  = x[3]
     symp_test    = x[4]
+
+    if until:
+        end_day = f'2020-{until}', # Change final day here
+    else:
+        end_day = f'2020-05-30', # Change final day here
 
     # Create parameters
     pop_size = 200e3
@@ -51,7 +52,7 @@ def create_sim(x, vb=vb, st=None):
         pop_infected = pop_infected,
         beta         = beta,
         start_day    = '2020-03-01',
-        end_day      = f'2020-05-30', # Change final day here
+        end_day      = end_day,
         rescale      = True,
         verbose      = vb.verbose,
     )
@@ -131,8 +132,8 @@ def op_objective(trial):
 
     return objective(x)
 
-def worker():
-    study = op.load_study(storage=storage_path(), study_name=name)
+def worker(st):
+    study = op.load_study(storage=storage_path(st), study_name=name)
     return study.optimize(op_objective, n_trials=n_trials)
 
 
@@ -140,20 +141,18 @@ def run_workers():
     return sc.parallelize(worker, n_workers)
 
 
-def make_study():
-    try: op.delete_study(storage=storage_path(), study_name=name)
+def make_study(st):
+    try: op.delete_study(storage=storage_path(st), study_name=name)
     except: pass
-    return op.create_study(storage=storage_path(), study_name=name)
+    return op.create_study(storage=storage_path(st), study_name=name)
 
 
 def load_study(st):
-    if st: state = st
-    return op.load_study(storage=storage_path(state), study_name=name)
+    return op.load_study(storage=storage_path(st), study_name=name)
 
 
-def get_best_pars(st=None):
-    if st: state = st
-    study = load_study(state)
+def get_best_pars(st):
+    study = load_study(st)
     output = study.best_params
     return output
 
@@ -168,36 +167,38 @@ def calibrate():
 
 if __name__ == '__main__':
 
-    for state in ['CA', 'IL', 'MA', 'MI', 'NJ', 'NY']:
+    for until in ['05-30', '04-30']:
 
-        # Plot initial
-        if vb.plot:
-            print('Running initial...')
-            pars, pkeys = get_bounds() # Get parameter guesses
-            sim = create_sim(pars.best)
-            sim.run()
-            sim.plot(to_plot=to_plot)
-            pl.gcf().axes[0].set_title('Initial parameter values')
-            objective(pars.best)
-            pl.pause(1.0) # Ensure it has time to render
+        for st in ['CA', 'IL', 'MA', 'MI', 'NJ', 'NY']:
 
-        # Calibrate
-        print(f'Starting calibration for {state}...')
-        T = sc.tic()
-        pars_calib = calibrate()
-        sc.toc(T)
+            # Plot initial
+            if vb.plot:
+                print('Running initial...')
+                pars, pkeys = get_bounds() # Get parameter guesses
+                sim = create_sim(pars.best)
+                sim.run()
+                sim.plot(to_plot=to_plot)
+                pl.gcf().axes[0].set_title('Initial parameter values')
+                objective(pars.best)
+                pl.pause(1.0) # Ensure it has time to render
 
-        if do_save:
-            sc.savejson(f'calibrated_parameters_v2_{state}.json', pars_calib)
+            # Calibrate
+            print(f'Starting calibration for {st}...')
+            T = sc.tic()
+            pars_calib = calibrate()
+            sc.toc(T)
 
-        # Plot result
-        if vb.plot:
-            print('Plotting result...')
-            x = [pars_calib[k] for k in pkeys]
-            sim = create_sim(x)
-            sim.run()
-            sim.plot(to_plot=to_plot)
-            pl.gcf().axes[0].set_title('Calibrated parameter values')
+            if do_save:
+                sc.savejson(f'calibrated_parameters_v2_{st}.json', pars_calib)
+
+            # Plot result
+            if vb.plot:
+                print('Plotting result...')
+                x = [pars_calib[k] for k in pkeys]
+                sim = create_sim(x)
+                sim.run()
+                sim.plot(to_plot=to_plot)
+                pl.gcf().axes[0].set_title('Calibrated parameter values')
 
 
 
