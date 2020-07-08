@@ -2,30 +2,35 @@ import pylab as pl
 import auto_calibration as ac
 
 # State set in auto_calibration.py
+
 state = 'CA'
+until = '05-30'
+
+cal = ac.Calibration(state, until)
+
 do_plot = 1
 run_init = 0
 
-pars, pkeys = ac.get_bounds() # Get parameter guesses
+pars, pkeys = cal.get_bounds() # Get parameter guesses
 
 if run_init:
     print('Running initial...')
-    sim = ac.create_sim(pars.best)
+    sim = cal.create_sim(pars.best)
     sim.run()
-    sim.plot(to_plot=ac.to_plot)
+    sim.plot(to_plot=cal.to_plot)
     pl.gcf().axes[0].set_title('Initial parameter values')
-    ac.objective(pars.best)
+    cal.objective(pars.best)
     pl.pause(1.0) # Ensure it has time to render
 
 print('Plotting result...')
-pars_calib = ac.get_best_pars(state)
+pars_calib = cal.get_best_pars()
 x = [pars_calib[k] for k in pkeys]
 print(x)
-sim = ac.create_sim(x, st=state)
-sim = ac.run_msim(sim, n_runs=3, n_cpus=3)
+sim = cal.create_sim(x)
+sim = cal.run_msim(n_runs=3, n_cpus=3)
 fit = sim.results.fit
 
 if do_plot:
-    sim.plot(to_plot=ac.to_plot)
+    sim.plot(to_plot=cal.to_plot)
     pl.gcf().axes[0].set_title('Calibrated parameter values')
     fit.plot()

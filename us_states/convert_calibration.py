@@ -4,12 +4,15 @@ import sciris as sc
 import auto_calibration as ac
 
 state = 'NY'
+until = '05-30'
+
+cal = ac.Calibration(state, until)
 
 #%% Load and analyze the data
 sc.heading('Loading data...')
-best, pkeys = ac.get_bounds()
+best, pkeys = cal.get_bounds()
 best = best['best']
-study = ac.load_study(state=state)
+study = cal.load_study()
 
 sc.heading('Making results structure...')
 results = []
