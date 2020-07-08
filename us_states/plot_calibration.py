@@ -22,7 +22,7 @@ x = [pars_calib[k] for k in pkeys]
 print(x)
 sim = ac.create_sim(x)
 sim = ac.run_msim(sim, n_runs=3, n_cpus=3)
-fit = sim.compute_fit()
+fit = sim.results.fit
 
 if do_plot:
     sim.plot(to_plot=ac.to_plot)

@@ -2,19 +2,9 @@ import numpy as np
 import pylab as pl
 import sciris as sc
 import covasim as cv
+import scipy as sp
 import optuna as op
 import load_data as ld
-
-# Saving and running
-state = 'CA'
-until = '05-30' # Note, update end day manually
-do_save   = 1
-name      = 'covasim'
-storage   = f'sqlite:///opt_v2_{until}_{state}.db'
-n_trials  = 30
-n_workers = 36
-cv.check_version('1.5.1', die=True) # Ensure Covasim version is correct
-
 
 # Control verbosity
 vb = sc.objdict()
@@ -23,10 +13,6 @@ vb.extra   = 0
 vb.plot    = 0
 vb.verbose = 0
 to_plot = ['cum_infections', 'new_infections', 'cum_tests', 'new_tests', 'cum_diagnoses', 'new_diagnoses', 'cum_deaths', 'new_deaths']
-
-# Define and load the data
-all_data = ld.load_data()
-data     = all_data[state]
 
 
 def create_sim(x, vb=vb):
@@ -69,10 +55,25 @@ def create_sim(x, vb=vb):
     return sim
 
 
-def run_msim(sim, n_runs=3, n_cpus=1):
+def smooth(y, sigma=3):
+    return sp.ndimage.gaussian_filter1d(y, sigma=sigma)
+
+
+def run_msim(sim, n_runs=1, n_cpus=1, new_deaths=True):
     msim = cv.MultiSim(base_sim=sim)
     msim.run(n_runs=n_runs, n_cpus=n_cpus)
     sim = msim.reduce(use_mean=True, output=True)
+    if new_deaths:
+        offset = cv.daydiff(sim['start_day'], sim.data['date'][0])
+        d_data = smooth(sim.data['new_deaths'].values)
+        d_sim  = smooth(sim.results['new_deaths'].values[offset:])
+        minlen = min(len(d_data), len(d_sim))
+        d_data = d_data[:minlen]
+        d_sim = d_sim[:minlen]
+        deaths = {'deaths':dict(data=d_data, sim=d_sim, weights=1)}
+        sim.compute_fit(custom=deaths, keys=[], weights={}, output=False)
+    else:
+        sim.compute_fit(output=False)
     return sim
 
 
@@ -82,9 +83,7 @@ def objective(x, vb=vb):
     # Create and run the sim
     sim = create_sim(x=x, vb=vb)
     sim = run_msim(sim)
-    fit = sim.compute_fit()
-
-    return fit.mismatch
+    return sim.results.fit.mismatch
 
 
 def get_bounds():
@@ -131,12 +130,12 @@ def make_study():
     return op.create_study(storage=storage, study_name=name)
 
 
-def load_study(state=state):
-    storage   = f'sqlite:///opt_{until}_{state}.db'
+def load_study(state):
+    storage   = f'sqlite:///opt_v2_{until}_{state}.db'
     return op.load_study(storage=storage, study_name=name)
 
 
-def get_best_pars(state=state):
+def get_best_pars(state):
     study = load_study(state=state)
     output = study.best_params
     return output
@@ -151,6 +150,21 @@ def calibrate():
 
 
 if __name__ == '__main__':
+
+    # Saving and running
+    state = 'CA'
+    until = '05-30' # Note, update end day manually
+    do_save   = 1
+    name      = 'covasim'
+    storage   = f'sqlite:///opt_v2_{until}_{state}.db'
+    n_trials  = 2
+    n_workers = 4
+    cv.check_version('1.5.1', die=True) # Ensure Covasim version is correct
+
+
+    # Define and load the data
+    all_data = ld.load_data()
+    data     = all_data[state]
 
     # # Plot initial
     if vb.plot:
@@ -170,7 +184,7 @@ if __name__ == '__main__':
     sc.toc(T)
 
     if do_save:
-        sc.savejson(f'calibrated_parameters_{state}.json', pars_calib)
+        sc.savejson(f'calibrated_parameters_v2_{state}.json', pars_calib)
 
     # Plot result
     if vb.plot:
