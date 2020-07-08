@@ -6,6 +6,14 @@ import scipy as sp
 import optuna as op
 import load_data as ld
 
+# Saving and running
+until = '05-30' # Note, update end day manually
+do_save   = 1
+name      = 'covasim'
+n_trials  = 100
+n_workers = 36
+cv.check_version('1.5.1', die=True) # Ensure Covasim version is correct
+
 # Control verbosity
 vb = sc.objdict()
 vb.base    = 0
@@ -15,10 +23,18 @@ vb.verbose = 0
 to_plot = ['cum_infections', 'new_infections', 'cum_tests', 'new_tests', 'cum_diagnoses', 'new_diagnoses', 'cum_deaths', 'new_deaths']
 
 
-def create_sim(x, vb=vb):
-    ''' Create the simulation from the
+def storage_path(st=None):
+    if st: state = st
+    return f'sqlite:///opt_v2_{until}_{state}.db'
 
-    parameters '''
+def create_sim(x, vb=vb, st=None):
+    ''' Create the simulation from the parameters '''
+
+    if st: state = st
+
+    # Define and load the data
+    all_data = ld.load_data()
+    data     = all_data[state]
 
     # Convert parameters
     pop_infected = x[0]
@@ -59,7 +75,7 @@ def smooth(y, sigma=3):
     return sp.ndimage.gaussian_filter1d(y, sigma=sigma)
 
 
-def run_msim(sim, n_runs=1, n_cpus=1, new_deaths=True):
+def run_msim(sim, n_runs=3, n_cpus=1, new_deaths=True):
     msim = cv.MultiSim(base_sim=sim)
     msim.run(n_runs=n_runs, n_cpus=n_cpus)
     sim = msim.reduce(use_mean=True, output=True)
@@ -71,7 +87,7 @@ def run_msim(sim, n_runs=1, n_cpus=1, new_deaths=True):
         d_data = d_data[:minlen]
         d_sim = d_sim[:minlen]
         deaths = {'deaths':dict(data=d_data, sim=d_sim, weights=1)}
-        sim.compute_fit(custom=deaths, keys=[], weights={}, output=False)
+        sim.compute_fit(custom=deaths, keys=['cum_diagnoses', 'cum_deaths'], weights={'cum_diagnoses':0.2, 'cum_deaths':0.2}, output=False)
     else:
         sim.compute_fit(output=False)
     return sim
@@ -116,7 +132,7 @@ def op_objective(trial):
     return objective(x)
 
 def worker():
-    study = op.load_study(storage=storage, study_name=name)
+    study = op.load_study(storage=storage_path(), study_name=name)
     return study.optimize(op_objective, n_trials=n_trials)
 
 
@@ -125,18 +141,19 @@ def run_workers():
 
 
 def make_study():
-    try: op.delete_study(storage=storage, study_name=name)
+    try: op.delete_study(storage=storage_path(), study_name=name)
     except: pass
-    return op.create_study(storage=storage, study_name=name)
+    return op.create_study(storage=storage_path(), study_name=name)
 
 
-def load_study(state):
-    storage   = f'sqlite:///opt_v2_{until}_{state}.db'
-    return op.load_study(storage=storage, study_name=name)
+def load_study(st):
+    if st: state = st
+    return op.load_study(storage=storage_path(state), study_name=name)
 
 
-def get_best_pars(state):
-    study = load_study(state=state)
+def get_best_pars(st=None):
+    if st: state = st
+    study = load_study(state)
     output = study.best_params
     return output
 
@@ -151,49 +168,36 @@ def calibrate():
 
 if __name__ == '__main__':
 
-    # Saving and running
-    state = 'CA'
-    until = '05-30' # Note, update end day manually
-    do_save   = 1
-    name      = 'covasim'
-    storage   = f'sqlite:///opt_v2_{until}_{state}.db'
-    n_trials  = 2
-    n_workers = 4
-    cv.check_version('1.5.1', die=True) # Ensure Covasim version is correct
+    for state in ['CA', 'IL', 'MA', 'MI', 'NJ', 'NY']:
 
+        # Plot initial
+        if vb.plot:
+            print('Running initial...')
+            pars, pkeys = get_bounds() # Get parameter guesses
+            sim = create_sim(pars.best)
+            sim.run()
+            sim.plot(to_plot=to_plot)
+            pl.gcf().axes[0].set_title('Initial parameter values')
+            objective(pars.best)
+            pl.pause(1.0) # Ensure it has time to render
 
-    # Define and load the data
-    all_data = ld.load_data()
-    data     = all_data[state]
+        # Calibrate
+        print(f'Starting calibration for {state}...')
+        T = sc.tic()
+        pars_calib = calibrate()
+        sc.toc(T)
 
-    # # Plot initial
-    if vb.plot:
-        print('Running initial...')
-        pars, pkeys = get_bounds() # Get parameter guesses
-        sim = create_sim(pars.best)
-        sim.run()
-        sim.plot(to_plot=to_plot)
-        pl.gcf().axes[0].set_title('Initial parameter values')
-        objective(pars.best)
-        pl.pause(1.0) # Ensure it has time to render
+        if do_save:
+            sc.savejson(f'calibrated_parameters_v2_{state}.json', pars_calib)
 
-    # Calibrate
-    print(f'Starting calibration for {state}...')
-    T = sc.tic()
-    pars_calib = calibrate()
-    sc.toc(T)
-
-    if do_save:
-        sc.savejson(f'calibrated_parameters_v2_{state}.json', pars_calib)
-
-    # Plot result
-    if vb.plot:
-        print('Plotting result...')
-        x = [pars_calib[k] for k in pkeys]
-        sim = create_sim(x)
-        sim.run()
-        sim.plot(to_plot=to_plot)
-        pl.gcf().axes[0].set_title('Calibrated parameter values')
+        # Plot result
+        if vb.plot:
+            print('Plotting result...')
+            x = [pars_calib[k] for k in pkeys]
+            sim = create_sim(x)
+            sim.run()
+            sim.plot(to_plot=to_plot)
+            pl.gcf().axes[0].set_title('Calibrated parameter values')
 
 
 
