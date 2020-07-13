@@ -37,6 +37,10 @@ class Calibration:
     def create_sim(self, x):
         ''' Create the simulation from the parameters '''
 
+        if isinstance(x, dict):
+            pars, pkeys = self.get_bounds() # Get parameter guesses
+            x = [x[k] for k in pkeys]
+
         # Define and load the data
         all_data = ld.load_data()
         data     = all_data[self.state]
