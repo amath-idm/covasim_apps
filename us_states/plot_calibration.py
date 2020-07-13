@@ -8,8 +8,13 @@ until = '05-30'
 cal = ac.Calibration(state, until)
 
 do_plot = 1
-do_save = 1
+do_save = 0
 run_init = 0
+n_runs = 3
+
+# Manual
+x = None
+# x = [8903, 0.009234690304264684, 41.956685173981896, 0.65, 18.300745581426092]
 
 pars, pkeys = cal.get_bounds() # Get parameter guesses
 
@@ -23,11 +28,12 @@ if run_init:
     pl.pause(1.0) # Ensure it has time to render
 
 print('Plotting result...')
-pars_calib = cal.get_best_pars()
-x = [pars_calib[k] for k in pkeys]
+if x is None:
+    pars_calib = cal.get_best_pars()
+    x = [pars_calib[k] for k in pkeys]
 print(x)
 sim = cal.create_sim(x)
-sim = cal.run_msim(n_runs=3, n_cpus=3)
+sim = cal.run_msim(n_runs=n_runs, n_cpus=n_runs)
 fit = sim.results.fit
 
 if do_save:
