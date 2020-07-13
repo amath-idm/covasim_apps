@@ -183,9 +183,9 @@ class Calibration:
 
 if __name__ == '__main__':
 
-    for until in ['04-30']: # ['05-30', '04-30']
+    for until in ['05-30']: # ['05-30', '04-30']
 
-        for state in ['MA', 'MI']: # ['CA', 'IL', 'MA', 'MI', 'NJ', 'NY']
+        for state in ['MA', 'MI', 'NJ']: # ['CA', 'IL', 'MA', 'MI', 'NJ', 'NY']
 
             cal = Calibration(state, until)
 
