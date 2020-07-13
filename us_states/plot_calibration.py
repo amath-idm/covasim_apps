@@ -1,14 +1,13 @@
 import pylab as pl
 import auto_calibration as ac
-import sciris as sc
 
 state = 'CA'
-until = '05-30'
+until = '04-30'
 
 cal = ac.Calibration(state, until)
 
 do_plot = 1
-do_save = 0
+do_save = 1
 run_init = 0
 n_runs = 1
 
@@ -37,7 +36,7 @@ sim = cal.run_msim(n_runs=n_runs, n_cpus=n_runs)
 fit = sim.results.fit
 
 if do_save:
-    sc.savejson(f'covasim_calibration_v2_{cal.state}_{until}.json', pars_calib)
+    cal.save()
 
 if do_plot:
     sim.plot(to_plot=cal.to_plot)

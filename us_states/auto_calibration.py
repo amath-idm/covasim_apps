@@ -20,7 +20,7 @@ class Calibration:
         self.name      = 'covasim'
         self.n_trials  = 50
         self.n_workers = 36
-        self.storage = f'sqlite:///opt_v3_{until}_{self.state}.db'
+        self.storage = f'sqlite:///opt_final_{until}_{self.state}.db'
 
         cv.check_version('1.5.1', die=True) # Ensure Covasim version is correct
 
@@ -180,6 +180,10 @@ class Calibration:
         output = self.get_best_pars()
         return output
 
+    def save(self):
+        pars_calib = self.get_best_pars()
+        sc.savejson(f'calibrated_parameters_final_{self.state}.json', pars_calib)
+
 
 if __name__ == '__main__':
 
@@ -205,9 +209,6 @@ if __name__ == '__main__':
             T = sc.tic()
             pars_calib = cal.calibrate()
             sc.toc(T)
-
-            if cal.do_save:
-                sc.savejson(f'calibrated_parameters_v2_{cal.state}.json', pars_calib)
 
             # Plot result
             if cal.vb.plot:
