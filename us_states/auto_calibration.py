@@ -186,7 +186,7 @@ class Calibration:
 
     def save(self):
         pars_calib = self.get_best_pars()
-        sc.savejson(f'calibrated_parameters_final_{self.state}.json', pars_calib)
+        sc.savejson(f'calibrated_parameters_{self.until}_{self.state}.json', pars_calib)
 
 
 if __name__ == '__main__':
