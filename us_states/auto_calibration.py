@@ -18,7 +18,7 @@ class Calibration:
         # Saving and running
         self.do_save   = 1
         self.name      = 'covasim'
-        self.n_trials  = 30
+        self.n_trials  = 50
         self.n_workers = 36
         self.storage = f'sqlite:///opt_v3_{until}_{self.state}.db'
 
@@ -183,9 +183,9 @@ class Calibration:
 
 if __name__ == '__main__':
 
-    for until in ['05-30']: # ['05-30', '04-30']
+    for until in ['04-30']: # ['05-30', '04-30']
 
-        for state in ['CA']: # ['CA', 'IL', 'MA', 'MI', 'NJ', 'NY']
+        for state in ['MA, MI']: # ['CA', 'IL', 'MA', 'MI', 'NJ', 'NY']
 
             cal = Calibration(state, until)
 

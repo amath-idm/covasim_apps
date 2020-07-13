@@ -10,7 +10,7 @@ cal = ac.Calibration(state, until)
 do_plot = 1
 do_save = 0
 run_init = 0
-n_runs = 3
+n_runs = 1
 
 # Manual
 x = None
