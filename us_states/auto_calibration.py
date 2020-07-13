@@ -18,9 +18,9 @@ class Calibration:
         # Saving and running
         self.do_save   = 1
         self.name      = 'covasim'
-        self.n_trials  = 100
+        self.n_trials  = 30
         self.n_workers = 36
-        self.storage = f'sqlite:///opt_v2_{until}_{self.state}.db'
+        self.storage = f'sqlite:///opt_v3_{until}_{self.state}.db'
 
         cv.check_version('1.5.1', die=True) # Ensure Covasim version is correct
 
@@ -88,7 +88,7 @@ class Calibration:
         return sp.ndimage.gaussian_filter1d(y, sigma=sigma)
 
 
-    def run_msim(self, n_runs=3, n_cpus=1, new_deaths=True):
+    def run_msim(self, n_runs=1, n_cpus=1, new_deaths=True):
         msim = cv.MultiSim(base_sim=self.sim)
         msim.run(n_runs=n_runs, n_cpus=n_cpus)
         sim = msim.reduce(use_mean=True, output=True)
@@ -183,9 +183,9 @@ class Calibration:
 
 if __name__ == '__main__':
 
-    for until in ['05-30', '04-30']:
+    for until in ['05-30']: # ['05-30', '04-30']
 
-        for state in ['CA', 'IL', 'MA', 'MI', 'NJ', 'NY']:
+        for state in ['CA']: # ['CA', 'IL', 'MA', 'MI', 'NJ', 'NY']
 
             cal = Calibration(state, until)
 
