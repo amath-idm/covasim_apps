@@ -1,13 +1,13 @@
 import pylab as pl
 import auto_calibration as ac
 
-state = 'NY'
-until = '05-30'
+state = 'MI'
+until = '04-30'
 
 cal = ac.Calibration(state, until)
 
 do_plot = 1
-do_save = 1
+do_save = 0
 run_init = 0
 n_runs = 1
 
