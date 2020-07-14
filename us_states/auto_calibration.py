@@ -53,10 +53,10 @@ class Calibration:
         beta_change  = x[3]
         symp_test    = x[4]
 
-        if self.until:
-            end_day = f'2020-{self.until}' # Change final day here
-        else:
-            end_day = f'2020-05-30' # Change final day here
+        # if self.until:
+        #     end_day = f'2020-{self.until}' # Change final day here
+        # else:
+        end_day = '2020-07-30' # Change final day here
 
         # Create parameters
         pop_size = 200e3
@@ -171,9 +171,11 @@ class Calibration:
         return op.load_study(storage=self.storage, study_name=self.name)
 
 
-    def get_best_pars(self):
+    def get_best_pars(self, print_mismatch=True):
         study = self.load_study()
         output = study.best_params
+        if print_mismatch:
+            print(f'Mismatch: {study.best_value}')
         return output
 
 

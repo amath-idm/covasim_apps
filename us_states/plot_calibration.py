@@ -1,8 +1,8 @@
 import pylab as pl
 import auto_calibration as ac
 
-state = 'MI'
-until = '04-30'
+state = 'CA'
+until = '05-30'
 
 cal = ac.Calibration(state, until)
 
