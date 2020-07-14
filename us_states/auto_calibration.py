@@ -20,9 +20,9 @@ class Calibration:
         self.name      = 'covasim'
         self.n_trials  = 50
         self.n_workers = 36
-        self.storage = f'sqlite:///opt_final_{until}_{self.state}.db'
+        self.storage = f'sqlite:///calibration_runs/opt_final_{until}_{self.state}.db'
 
-        cv.check_version('1.5.1', die=True) # Ensure Covasim version is correct
+        cv.check_version('1.5.1', die=False) # Ensure Covasim version is correct
 
         # Control verbosity
         vb = sc.objdict()
@@ -94,8 +94,8 @@ class Calibration:
 
     def run_msim(self, n_runs=1, n_cpus=1, new_deaths=True):
         msim = cv.MultiSim(base_sim=self.sim)
-        msim.run(n_runs=n_runs, n_cpus=n_cpus)
-        sim = msim.reduce(use_mean=True, output=True)
+        msim.run(n_runs=n_runs) # , n_cpus=n_cpus # For 1.5.1
+        sim = msim.reduce(output=True) # For 1.5.1
         if new_deaths:
             offset = cv.daydiff(sim['start_day'], sim.data['date'][0])
             d_data = self.smooth(sim.data['new_deaths'].values)

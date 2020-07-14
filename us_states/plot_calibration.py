@@ -32,7 +32,7 @@ if x is None:
     x = [pars_calib[k] for k in pkeys]
 print(x)
 sim = cal.create_sim(x)
-sim = cal.run_msim(n_runs=n_runs, n_cpus=n_runs)
+sim = cal.run_msim(n_runs=n_runs) # , n_cpus=n_runs # For 1.5.1
 fit = sim.results.fit
 
 if do_save:

@@ -19,7 +19,7 @@ for until in ['05-30', '04-30']:
             print('Plotting result...')
             pars = cal.get_best_pars()
             sim = cal.create_sim(pars)
-            sim = cal.run_msim(n_runs=n_runs, n_cpus=n_runs)
+            sim = cal.run_msim(n_runs=n_runs) # , n_cpus=n_runs # For 1.5.1
             fit = sim.results.fit
             fit.plot()
             pl.gcf().axes[0].set_title(f'Calibration for {state} until {until}', fontweight='bold')
